@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Rol</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+</head>
+<body onload="openTab('load')">
+    <div class="container">
+
+        <h1>D&D - El Señor de los Anillos</h1>
+
+        <div class="tabs">
+            <div class="tab" onclick="openTab('characters')">Personajes</div>
+            <div class="tab" onclick="openTab('enemies')">Enemigos</div>
+            <div class="tab" onclick="openTab('combat')">Combate</div>
+            <div class="tab" onclick="openTab('skills')">Habilidades</div>
+            <div class="tab" onclick="openTab('items')">Objetos</div>
+            <div class="tab" onclick="openTab('map')">Mapa</div>
+            <div class="tab" onclick="openTab('load')">Cargar Datos</div>
+        </div>
+
+        <div id="characters" class="content active">
+            <div id="characterContainer" class="character-container"></div>
+        </div>
+
+        <div id="combat" class="content">
+            <h2>Combate</h2>
+            <div class="combat-container">
+                <div class="combat-select">
+                    <label for="characterSelect">Personaje:</label>
+                    <select id="characterSelect" onchange="loadCharacterStats()">
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="combat-stats" id="characterStats">
+                    <!-- Character stats will be displayed here -->
+                </div>
+                <div class="combat-select">
+                    <label for="enemySelect">Enemigo:</label>
+                    <select id="enemySelect" onchange="loadEnemyStats()">
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="combat-stats" id="enemyStats">
+                    <!-- Enemy stats will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <div id="enemies" class="content">
+            <div id="enemyContainer" class="enemy-container"></div>
+        </div>
+        <div id="load" class="content">
+            <textarea id="jsonInput" placeholder="Pega aquí el JSON..."></textarea>
+            <button onclick="loadData()">Cargar Datos</button>
+        </div>
+
+        <!--SKILLS -->
+        <div id="skills" class="content">
+            <!--FILTERS-->
+            <div class="filters">
+				<select id="skillFilter" onchange="filterSkills()">
+					<option value="all">-Clase-</option>
+                    <option value="Guerrero">Guerrero</option>
+                    <option value="Explorador">Explorador</option>
+                    <option value="Pícaro">Pícaro</option>
+                    <option value="Hechicero">Hechicero</option>
+                    <option value="Paladín">Paladín</option>
+                    <option value="Druida">Druida</option>
+                    <option value="Clérigo">Clérigo</option>
+                    <option value="Bardo">Bardo</option>
+				</select>
+                <button class="reset-button" onclick="resetFiltersSkills()">Restablecer Filtros</button>
+            </div>
+
+            <!--TABLE-->
+            <table id="skillsTable">
+                <thead>
+                    <tr>
+                        <th>Nombre de la habilidad</th>
+                        <th>Descripción</th>
+                        <th>Nivel</th>
+                        <th>Clase</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <!--FIN SKILLS-->
+
+        <!--ITEMS-->
+        <div id="items" class="content">
+			<div class="filters">
+				<select id="itemFilter" onchange="filterItems()">
+					<option value="all">-Tipo de objeto-</option>
+					<option value="Poción">Poción</option>
+					<option value="Arma">Arma</option>
+					<option value="Armadura">Armadura</option>
+
+                    <option value="Cabeza">Cabeza</option>
+                    <option value="Brazales">Brazales</option>
+                    <option value="Guantes">Guantes</option>
+                    <option value="Cinturón">Cinturón</option>
+                    <option value="Botas">Botas</option>
+
+					<option value="Para vender">Para vender</option>
+				</select>
+				<select id="levelFilter" onchange="filterItems()">
+					<option value="all">-Nivel-</option>
+					<option value="1">Nivel 1</option>
+					<option value="10">Nivel 10</option>
+					<option value="15">Nivel 15</option>
+					<option value="20">Nivel 20</option>
+					<!-- Añadir más niveles según sea necesario -->
+				</select>
+				<select id="classFilter" onchange="filterItems()">
+					<option value="all">-Clase-</option>
+					<option value="Todos">Todos</option>
+					<option value="Guerrero">Guerrero</option>
+					<option value="Explorador">Explorador</option>
+					<option value="Hechicero">Hechicero</option>
+					<option value="Pícaro">Pícaro</option>
+					<option value="Paladín">Paladín</option>
+					<option value="Bardo">Bardo</option>
+					<option value="Clérigo">Clérigo</option>
+					<option value="Druida">Druida</option>
+					<!-- Añadir más clases según sea necesario -->
+				</select>
+				<button class="reset-button" onclick="resetFilters()">Restablecer Filtros</button>
+			</div>
+			
+            <table id="itemsTable">
+				<thead>
+					<tr>
+						<th>Nombre del objeto</th>
+						<th>Descripción</th>
+						<th>Tipo de objeto</th>
+						<th>Precio (Oro)</th>
+						<th>Nivel</th>
+						<th>Clase</th>
+					</tr>
+				</thead>
+				<tbody></tbody>
+			</table>
+        </div>
+        <!--FIN ITEMS-->
+        <!--MAP-->
+
+        <div id="map" class="content">
+            <h2>Mapa de la Tierra Media</h2>
+            <div id="mapContainer" class="map-container">
+                <button onclick="clearMarkers()" class="reset-button">Borrar Marcas</button>
+                <img src="https://tierramedia.net/wp-content/uploads/mapa-tierra-media-16.jpg" id="mapImage" alt="Mapa de la Tierra Media">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openTab(tabName) {
+            // Remover la clase 'active' de todos los contenidos
+            const contents = document.getElementsByClassName("content");
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].classList.remove("active");
+            }
+            
+            // Mostrar el contenido correspondiente
+            document.getElementById(tabName).classList.add("active");
+
+            // Remover la clase 'active' de todas las pestañas
+            const tabs = document.getElementsByClassName("tab");
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove("active");
+            }
+
+            // Buscar la pestaña activa y añadir la clase 'active'
+            for (let i = 0; i < tabs.length; i++) {
+                if (tabs[i].getAttribute('onclick').includes(tabName)) {
+                    tabs[i].classList.add("active");
+                }
+            }
+
+            // Cargar datos específicos según la pestaña
+            if (tabName === 'items') {
+                loadItems();
+            }
+            if (tabName === 'skills') {
+                loadSkills();
+            }
+        }
+
+        document.getElementById('mapImage').addEventListener('click', function(event) {
+            var mapContainer = document.getElementById('mapContainer');
+            var rect = mapContainer.getBoundingClientRect();
+            var x = event.clientX - rect.left;
+            var y = event.clientY - rect.top;
+
+            var marker = document.createElement('div');
+            marker.classList.add('marker');
+            marker.style.left = x + 'px';
+            marker.style.top = y + 'px';
+            mapContainer.appendChild(marker);
+        });
+
+        function clearMarkers() {
+            var mapContainer = document.getElementById('mapContainer');
+            var markers = document.getElementsByClassName('marker');
+            while (markers.length > 0) {
+                markers[0].parentNode.removeChild(markers[0]);
+            }
+        }
+        
+        let charactersData = [];
+        let enemiesData = [];
+
+        // Cargar datos del JSON
+        function loadData() {
+            const jsonInput = document.getElementById('jsonInput').value;
+            const characterContainer = document.getElementById('characterContainer');
+            const enemyContainer = document.getElementById('enemyContainer');
+            characterContainer.innerHTML = ''; // Limpiar contenido existente
+            enemyContainer.innerHTML = ''; // Limpiar contenido existente
+
+            try {
+                const data = JSON.parse(jsonInput);
+                
+                // Guardar datos de personajes y enemigos para uso posterior
+                charactersData = data.characters;
+                enemiesData = data.enemies;
+
+                console.log("Datos de personajes cargados:", charactersData);
+                console.log("Datos de enemigos cargados:", enemiesData);
+                
+                // Poblar el contenedor de personajes
+                data.characters.forEach(character => {
+                    const characterDiv = document.createElement('div');
+                    characterDiv.className = 'character';
+
+                    const characterInfo = `
+                        <img src="${character.image}" alt="${character.name}">
+                        <h2>${character.name}</h2>
+                        <h3>Nivel: ${character.level}</h3>
+                        <p><strong>Género:</strong> ${character.gender}</p>
+                        <p><strong>Raza:</strong> ${character.race}</p>
+                        <p><strong>Clase:</strong> ${character.class}</p>
+                        <h3>Estadísticas</h3>
+                        <ul class="stats">
+                            <li><strong>VIT:</strong> ${character.stats.VIT}</li>
+                            <li><strong>FUE:</strong> ${character.stats.FUE}</li>
+                            <li><strong>DES:</strong> ${character.stats.DES}</li>
+                            <li><strong>INT:</strong> ${character.stats.INT}</li>
+                            <li><strong>CAR:</strong> ${character.stats.CAR}</li>
+                        </ul>
+                        <h3>Inventario</h3>
+                        <ul class="inventory">
+                            <li><strong>Oro:</strong> ${character.inventory.gold}</li>
+                            <li><strong>Gemas:</strong> ${character.inventory.gems}</li>
+                            <li><strong>Objetos:</strong> ${character.inventory.items.join(', ')}</li>
+                        </ul>
+                        <h3>Experiencia</h3>
+                        <p>${character.xp}</p>
+                    `;
+                    
+                    characterDiv.innerHTML = characterInfo;
+                    characterContainer.appendChild(characterDiv);
+                });
+
+                // Poblar el contenedor de enemigos
+                data.enemies.forEach(enemy => {
+                    const enemyDiv = document.createElement('div');
+                    enemyDiv.className = 'enemy';
+
+                    const enemyInfo = `
+                        <h2>${enemy.name}</h2>
+                        <h3>Estadísticas</h3>
+                        <ul class="stats">
+                            <li><strong>VIT:</strong> ${enemy.stats.VIT}</li>
+                            <li><strong>FUE:</strong> ${enemy.stats.FUE}</li>
+                            <li><strong>DES:</strong> ${enemy.stats.DES}</li>
+                            <li><strong>INT:</strong> ${enemy.stats.INT}</li>
+                            <li><strong>CAR:</strong> ${enemy.stats.CAR}</li>
+                        </ul>
+                    `;
+
+                    enemyDiv.innerHTML = enemyInfo;
+                    enemyContainer.appendChild(enemyDiv);
+                });
+
+                // Poblar los selects en la pestaña de combate
+                populateCombatSelects();
+
+                openTab('characters'); // Cambia a la pestaña de personajes como predeterminada
+            } catch (error) {
+                console.error('Error al cargar el JSON:', error);
+                alert('JSON inválido. Por favor, verifica el formato e inténtalo nuevamente.');
+            }
+        }
+
+        // Poblar los selects de personajes y enemigos en la pestaña de combate
+        function populateCombatSelects() {
+            const characterSelect = document.getElementById('characterSelect');
+            const enemySelect = document.getElementById('enemySelect');
+
+            characterSelect.innerHTML = charactersData.map(character => `<option value="${character.name}">${character.name}</option>`).join('');
+            enemySelect.innerHTML = enemiesData.map(enemy => `<option value="${enemy.name}">${enemy.name}</option>`).join('');
+
+            // Si hay personajes, carga el primero
+            if (charactersData.length > 0) {
+                characterSelect.value = charactersData[0].name;
+                loadCharacterStats();
+            }
+
+            // Si hay enemigos, carga el primero
+            if (enemiesData.length > 0) {
+                enemySelect.value = enemiesData[0].name;
+                loadEnemyStats();
+            }
+        }
+
+        // Cargar estadísticas del personaje seleccionado
+        function loadCharacterStats() {
+            const characterName = document.getElementById('characterSelect').value;
+            const character = charactersData.find(c => c.name === characterName);
+            console.log("Personaje seleccionado:", characterName, character); // Log para verificar
+
+            if (character) {
+                document.getElementById('characterStats').innerHTML = generateStatsHtml(character, 'character');
+            } else {
+                document.getElementById('characterStats').innerHTML = '<p>No se encontró el personaje seleccionado.</p>';
+            }
+        }
+
+        // Cargar estadísticas del enemigo seleccionado
+        function loadEnemyStats() {
+            const enemyName = document.getElementById('enemySelect').value;
+            const enemy = enemiesData.find(e => e.name === enemyName);  // Encontrar enemigo por nombre
+            console.log("Enemigo seleccionado:", enemyName, enemy);  // Log para verificar
+
+            if (enemy) {
+                document.getElementById('enemyStats').innerHTML = generateStatsHtml(enemy, 'enemy');
+            } else {
+                document.getElementById('enemyStats').innerHTML = '<p>No se encontró el enemigo seleccionado.</p>';
+            }
+        }
+
+        // Generar HTML para las estadísticas
+        function generateStatsHtml(entity, type) {
+            // Comprobar si 'entity' es un personaje o enemigo y adaptar el HTML
+            const statInputs = Object.keys(entity.stats).map(stat => {
+                return `
+                    <div>
+                        <span>${stat}:</span>
+                        <span id="${type}-${stat}-value">${entity.stats[stat]}</span>
+                        <input type="number" class="stat-input" id="${type}-${stat}" placeholder="0">
+                    </div>
+                `;
+            }).join('');
+
+            return `
+                <h3>${entity.name} - ${entity.class || 'Enemigo'}</h3>
+                ${statInputs}
+                <button class="update-button" onclick="updateStats('${entity.name}', '${type}')">Actualizar</button>
+            `;
+        }
+
+        // Actualizar estadísticas
+        function updateStats(name, type) {
+            const entity = (type === 'character') ? charactersData.find(c => c.name === name) : enemiesData.find(e => e.name === name);
+            console.log("Actualizando estadísticas para:", name, entity); // Log para verificar
+
+            if (entity) {
+                Object.keys(entity.stats).forEach(stat => {
+                    const input = document.getElementById(`${type}-${stat}`);
+                    const delta = parseInt(input.value) || 0;
+                    entity.stats[stat] += delta;
+                    document.getElementById(`${type}-${stat}-value`).innerText = entity.stats[stat];
+                    input.value = ''; // Limpiar el campo de texto
+                });
+            } else {
+                alert('Error: entidad no encontrada.');
+            }
+        }
+
+
+        function loadItems() {
+			const url = 'items.xlsx'; // Cambia esto a la ruta de tu archivo
+
+			fetch(url)
+				.then(response => response.arrayBuffer())
+				.then(data => {
+					const workbook = XLSX.read(data, {type: 'array'});
+					const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+					const items = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+
+					const tableBody = document.querySelector('#itemsTable tbody');
+					tableBody.innerHTML = ''; // Clear existing content
+
+					items.forEach((row, index) => {
+						if (index === 0) return; // Skip header row
+
+						const tr = document.createElement('tr');
+						row.forEach((cell, cellIndex) => {
+							const td = document.createElement('td');
+							td.textContent = cell;
+
+							// Add data-label attribute for responsive design
+							switch (cellIndex) {
+								case 0: td.setAttribute('data-label', 'Nombre del objeto'); break;
+								case 1: td.setAttribute('data-label', 'Descripción'); break;
+								case 2: td.setAttribute('data-label', 'Tipo de objeto'); break;
+								case 3: td.setAttribute('data-label', 'Precio (Oro)'); break;
+								case 4: td.setAttribute('data-label', 'Nivel'); break;
+								case 5: td.setAttribute('data-label', 'Clase'); break;
+							}
+
+							tr.appendChild(td);
+						});
+
+						tr.setAttribute('data-type', row[2]); // Assume third column is the type
+						tr.setAttribute('data-level', row[4]); // Assume fifth column is the level
+						tr.setAttribute('data-class', row[5]); // Assume sixth column is the class
+						tableBody.appendChild(tr);
+					});
+				})
+				.catch(error => {
+					console.error('Error al cargar el archivo XLS:', error);
+				});
+		}
+
+		function resetFilters() {
+			document.getElementById('itemFilter').value = 'all';
+			document.getElementById('levelFilter').value = 'all';
+			document.getElementById('classFilter').value = 'all';
+			filterItems();
+		}
+
+		function filterItems() {
+			const typeFilter = document.getElementById('itemFilter').value;
+			const levelFilter = document.getElementById('levelFilter').value;
+			const classFilter = document.getElementById('classFilter').value.toLowerCase();
+			const rows = document.querySelectorAll('#itemsTable tbody tr');
+			
+			rows.forEach(row => {
+				const typeMatch = typeFilter === 'all' || row.getAttribute('data-type') === typeFilter;
+				const levelMatch = levelFilter === 'all' || row.getAttribute('data-level') === levelFilter;
+				const classMatch = classFilter === 'all' || row.getAttribute('data-class').toLowerCase().includes(classFilter);
+				
+				if (typeMatch && levelMatch && classMatch) {
+					row.style.display = '';
+				} else {
+					row.style.display = 'none';
+				}
+			});
+		}
+
+        // SKILLS LOAD AND FILTERS
+
+        function loadSkills() {
+            const url = 'skills.xlsx'; // Cambia esto a la ruta de tu archivo
+
+            fetch(url)
+                .then(response => response.arrayBuffer())
+                .then(data => {
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const skills = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+
+                    const tableBody = document.querySelector('#skillsTable tbody');
+                    tableBody.innerHTML = ''; // Clear existing content
+
+                    skills.forEach((row, index) => {
+                        if (index === 0) return; // Skip header row
+
+                        const tr = document.createElement('tr');
+                        row.forEach((cell, cellIndex) => {
+                            const td = document.createElement('td');
+                            td.textContent = cell;
+
+                            // Add data-skill attribute for responsive design
+                            switch (cellIndex) {
+                                case 0: td.setAttribute('data-skill', 'Nombre de la habilidad'); break;
+                                case 1: td.setAttribute('data-skill', 'Descripción'); break;
+                                case 2: td.setAttribute('data-skill', 'Nivel'); break;
+                                case 3: td.setAttribute('data-skill', 'Clase'); break;
+                            }
+
+                            tr.appendChild(td);
+                        });
+
+                        tr.setAttribute('data-class', row[3]); // Assume fourth column is the class
+                        tableBody.appendChild(tr);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error al cargar el archivo XLS:', error);
+                });
+        }
+
+        function resetFilters() {
+			document.getElementById('itemFilter').value = 'all';
+			document.getElementById('levelFilter').value = 'all';
+			document.getElementById('classFilter').value = 'all';
+			filterItems();
+		}
+
+		function filterSkills() {
+            const skillFilter = document.getElementById('skillFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#skillsTable tbody tr');
+            
+            rows.forEach(row => {
+                const classMatch = skillFilter === 'all' || row.getAttribute('data-class').toLowerCase().includes(skillFilter);
+                
+                if (classMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function resetFiltersSkills() {
+			document.getElementById('skillFilter').value = 'all';
+			filterSkills();
+		}
+    </script>
+</body>
+</html>
