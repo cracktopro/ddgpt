@@ -50,6 +50,7 @@ button:hover {
 .tabs {
     display: flex;
     flex-wrap: wrap;
+    align-items: flex-start;
     cursor: pointer;
     margin-bottom: 20px;
 }
@@ -59,7 +60,7 @@ button:hover {
     padding: 10px;
     background: #333;
     text-align: center;
-    border-radius: 5px 5px 0 0;
+    border-radius: 5px 5px 5px 5px;
     transition: background 0.3s;
 }
 
@@ -205,6 +206,7 @@ table tr:hover {
 
 .reset-button {
     width: fit-content;
+    margin-bottom: 10px;
     padding: 5px 10px;
     font-size: 14px;
     cursor: pointer;
@@ -351,4 +353,151 @@ table tr:hover {
 
 .update-button:hover {
     background-color: #333;
+}
+
+/* Estilo para la ventana emergente de recompensas */
+.reward-popup {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8); /* Más oscuro para mayor contraste */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.reward-popup-content {
+    background-color: #474747; /* Un tono más suave */
+    padding: 30px;
+    border: 1px solid #215a4d;
+    width: 90%;
+    max-width: 400px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    position: relative;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.close {
+    color: #555;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.close:hover,
+.close:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+input[type="number"],
+input[type="checkbox"] {
+    width: calc(100% - 20px);
+    padding: 10px;
+    border: 1px solid #215a4d;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+input[type="checkbox"] {
+    width: auto; /* Ajuste especial para el checkbox */
+    margin-left: 10px;
+}
+
+.generate-button {
+    background-color: #215a4d;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 18px;
+    transition: background-color 0.3s ease;
+}
+
+.generate-button:hover {
+    background-color: #2f8873;
+}
+
+.reward-results {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.reward-results h3 {
+    margin-top: 0;
+    color: #fff;
+}
+
+.reward-results p {
+    margin-top: 0;
+    color: yellow;
+    font-weight: bold;
+}
+
+.reward-results ul {
+    padding: 0;
+    list-style: none;
+}
+
+.reward-results li {
+    background-color: #353535;
+    color: yellow;
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 5px;
+}
+
+/* Media query para dispositivos móviles */
+@media (max-width: 600px) {
+    .reward-popup-content {
+        width: 95%;
+        padding: 20px;
+    }
+
+    label {
+        font-size: 14px;
+    }
+
+    input[type="number"],
+    .generate-button {
+        font-size: 16px;
+    }
+}
+li{
+    background-color: none;
+}
+.buttonUpdateChar{
+    width: 350px;
 }

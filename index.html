@@ -19,22 +19,57 @@
             <div class="tab" onclick="openTab('combat')">Combate</div>
             <div class="tab" onclick="openTab('skills')">Habilidades</div>
             <div class="tab" onclick="openTab('items')">Objetos</div>
+            <div class="tab" onclick="openTab('exp')">Niveles</div>
             <div class="tab" onclick="openTab('map')">Mapa</div>
             <div class="tab" onclick="openTab('load')">Cargar Datos</div>
         </div>
 
         <div id="characters" class="content active">
             <div id="characterContainer" class="character-container"></div>
+            <div class="character-actions">
+                <button id="saveGameButton" onclick="saveGame()">Guardar Partida</button>
+                <button id="copyToClipboardButton" onclick="copyToClipboard()">Copiar al Portapapeles</button>
+            </div>
         </div>
 
         <div id="combat" class="content">
             <h2>Combate</h2>
+            <!-- Botón para abrir la ventana de recompensas -->
+            <button id="generateRewardButton" onclick="openRewardPopup()">Generar Recompensas</button>
+
+            <div id="rewardPopup" class="reward-popup hidden">
+                <div class="reward-popup-content">
+                    <span class="close" onclick="closeRewardPopup()">&times;</span>
+                    <h2>Generar Recompensas</h2>
+                    <form id="rewardForm">
+                        <div class="form-group">
+                            <label for="playerLevel">Nivel de los Jugadores:</label>
+                            <input type="number" id="playerLevel" name="playerLevel" min="1" max="20" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="enemiesDefeated">Enemigos Derrotados:</label>
+                            <input type="number" id="enemiesDefeated" name="enemiesDefeated" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="isBoss">Jefe:</label>
+                            <input type="checkbox" id="isBoss" name="isBoss">
+                        </div>
+                        <button type="button" class="generate-button" onclick="generateRewards()">Generar</button>
+                    </form>
+                    <div id="rewardResults" class="reward-results"></div>
+                </div>
+            </div>
+            
+
             <div class="combat-container">
                 <div class="combat-select">
                     <label for="characterSelect">Personaje:</label>
                     <select id="characterSelect" onchange="loadCharacterStats()">
                         <!-- Options will be populated dynamically -->
                     </select>
+                    <!-- Botón para actualizar personajes -->
+                    <p>Tras finalizar el combate, genera la recompensa y actualiza tu personaje para guardar su progreso.</p>
+                    <button id="updateCharacterButton" class="buttonUpdateChar" onclick="updateCharacterData()">Actualizar Personaje</button>
                 </div>
                 <div class="combat-stats" id="characterStats">
                     <!-- Character stats will be displayed here -->
@@ -49,6 +84,8 @@
                     <!-- Enemy stats will be displayed here -->
                 </div>
             </div>
+            
+
         </div>
 
         <div id="enemies" class="content">
@@ -148,11 +185,29 @@
 			</table>
         </div>
         <!--FIN ITEMS-->
+
+        <!--NIVELES -->
+        <div id="exp" class="content">
+            <!--TABLE-->
+            <table id="expTable">
+                <thead>
+                    <tr>
+                        <th>Nivel</th>
+                        <th>Experiencia Total</th>
+                        <th>Incremento de Experiencia</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <!--FIN NIVELES-->
+
         <!--MAP-->
 
         <div id="map" class="content">
             <h2>Mapa de la Tierra Media</h2>
             <div id="mapContainer" class="map-container">
+                <p>Haz click sobre el mapa para insertar una marca.</p>
                 <button onclick="clearMarkers()" class="reset-button">Borrar Marcas</button>
                 <img src="https://tierramedia.net/wp-content/uploads/mapa-tierra-media-16.jpg" id="mapImage" alt="Mapa de la Tierra Media">
             </div>
@@ -160,13 +215,19 @@
     </div>
 
     <script>
+
+        let charactersData = [];
+        let enemiesData = [];
+        let skillsLoaded = false; // Variable para controlar la carga de habilidades
+        let itemsLoaded = false; // Variable para controlar si los datos de los objetos ya se han cargado
+
         function openTab(tabName) {
             // Remover la clase 'active' de todos los contenidos
             const contents = document.getElementsByClassName("content");
             for (let i = 0; i < contents.length; i++) {
                 contents[i].classList.remove("active");
             }
-            
+
             // Mostrar el contenido correspondiente
             document.getElementById(tabName).classList.add("active");
 
@@ -185,10 +246,21 @@
 
             // Cargar datos específicos según la pestaña
             if (tabName === 'items') {
-                loadItems();
+                if (!itemsLoaded) {
+                    loadItems();
+                } else {
+                    filterItems(); // Aplicamos el filtro actual al volver a la pestaña
+                }
             }
             if (tabName === 'skills') {
-                loadSkills();
+                if (!skillsLoaded) { // Verificamos si ya hemos cargado las habilidades
+                    loadSkills();
+                } else {
+                    filterSkills(); // Aplicamos el filtro actual al volver a la pestaña
+                }
+            }
+            if (tabName === 'exp') {
+                loadExp();
             }
         }
 
@@ -213,8 +285,68 @@
             }
         }
         
-        let charactersData = [];
-        let enemiesData = [];
+        // Función para guardar la partida como un archivo JSON
+        function saveGame() {
+            // Convertir los datos de los personajes a JSON
+            const jsonData = JSON.stringify({ characters: charactersData }, null, 2);
+
+            // Crear un blob de tipo JSON
+            const blob = new Blob([jsonData], { type: 'application/json' });
+
+            // Crear un enlace de descarga
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'savegame.json';
+            a.click();
+
+            // Liberar el objeto URL
+            URL.revokeObjectURL(url);
+
+            alert('Partida guardada exitosamente como savegame.json');
+        }
+
+        // Función para copiar los datos de los personajes al portapapeles
+        function copyToClipboard() {
+            const jsonData = JSON.stringify({ characters: charactersData }, null, 2);
+
+            // Utilizar la API del portapapeles
+            navigator.clipboard.writeText(jsonData).then(() => {
+                alert('Datos copiados al portapapeles');
+            }).catch(err => {
+                console.error('Error al copiar al portapapeles:', err);
+                alert('Error al copiar al portapapeles');
+            });
+        }
+
+        // Función para cargar los datos de savegame.json al cargar la página
+        function loadSavedGame() {
+            fetch('savegame.json')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('No se encontró el archivo savegame.json');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.characters) {
+                        charactersData = data.characters;
+                        loadCharacterData();
+                        alert('Partida cargada exitosamente desde savegame.json');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al cargar la partida:', error);
+                    // Opcional: Mostrar un mensaje si el archivo no existe
+                    // alert('No se encontró un archivo de partida guardada.');
+                });
+        }
+
+        // Llamar a la función al cargar la página
+        window.onload = function() {
+            loadSavedGame();
+            openTab('load'); // Mantener el comportamiento original de abrir la pestaña de carga
+        };
 
         // Cargar datos del JSON
         function loadData() {
@@ -257,7 +389,6 @@
                         <h3>Inventario</h3>
                         <ul class="inventory">
                             <li><strong>Oro:</strong> ${character.inventory.gold}</li>
-                            <li><strong>Gemas:</strong> ${character.inventory.gems}</li>
                             <li><strong>Objetos:</strong> ${character.inventory.items.join(', ')}</li>
                         </ul>
                         <h3>Experiencia</h3>
@@ -318,6 +449,89 @@
                 enemySelect.value = enemiesData[0].name;
                 loadEnemyStats();
             }
+        }
+
+        function updateCharacterData() {
+            // Obtener el personaje seleccionado
+            const characterName = document.getElementById('characterSelect').value;
+            const character = charactersData.find(c => c.name === characterName);
+
+            if (!character) {
+                alert('Por favor, selecciona un personaje para actualizar.');
+                return;
+            }
+
+            // Obtener las recompensas generadas
+            const rewardResults = document.getElementById('rewardResults');
+            if (!rewardResults.innerHTML) {
+                alert('Por favor, genera recompensas antes de actualizar.');
+                return;
+            }
+
+            // Extraer experiencia, oro y objetos de las recompensas
+            const expRegex = /(\d+) EXP/;
+            const goldRegex = /(\d+) de oro/;
+            const itemsRegex = /<li>(.*?) - Nivel:/g;
+
+            const expMatch = expRegex.exec(rewardResults.innerHTML);
+            const goldMatch = goldRegex.exec(rewardResults.innerHTML);
+            let itemsMatch;
+            const items = [];
+
+            while ((itemsMatch = itemsRegex.exec(rewardResults.innerHTML)) !== null) {
+                items.push(itemsMatch[1]);
+            }
+
+            const expGain = expMatch ? parseInt(expMatch[1], 10) : 0;
+            const goldGain = goldMatch ? parseInt(goldMatch[1], 10) : 0;
+
+            // Actualizar estadísticas del personaje
+            character.xp += expGain;
+            character.inventory.gold += goldGain;
+            character.inventory.items = [...character.inventory.items, ...items];
+
+            // Refrescar la vista de personajes
+            loadCharacterData();
+
+            alert(`Personaje ${character.name} actualizado con ${expGain} EXP, ${goldGain} de oro y ${items.length} objetos nuevos.`);
+        }
+
+        // Función para refrescar la vista de personajes
+        function loadCharacterData() {
+            const characterContainer = document.getElementById('characterContainer');
+            characterContainer.innerHTML = ''; // Limpiar contenido existente
+
+            charactersData.forEach(character => {
+                const characterDiv = document.createElement('div');
+                characterDiv.className = 'character';
+
+                const characterInfo = `
+                    <img src="${character.image}" alt="${character.name}">
+                    <h2>${character.name}</h2>
+                    <h3>Nivel: ${character.level}</h3>
+                    <p><strong>Género:</strong> ${character.gender}</p>
+                    <p><strong>Raza:</strong> ${character.race}</p>
+                    <p><strong>Clase:</strong> ${character.class}</p>
+                    <h3>Estadísticas</h3>
+                    <ul class="stats">
+                        <li><strong>VIT:</strong> ${character.stats.VIT}</li>
+                        <li><strong>FUE:</strong> ${character.stats.FUE}</li>
+                        <li><strong>DES:</strong> ${character.stats.DES}</li>
+                        <li><strong>INT:</strong> ${character.stats.INT}</li>
+                        <li><strong>CAR:</strong> ${character.stats.CAR}</li>
+                    </ul>
+                    <h3>Inventario</h3>
+                    <ul class="inventory">
+                        <li><strong>Oro:</strong> ${character.inventory.gold}</li>
+                        <li><strong>Objetos:</strong> ${character.inventory.items.join(', ')}</li>
+                    </ul>
+                    <h3>Experiencia</h3>
+                    <p>${character.xp}</p>
+                `;
+                
+                characterDiv.innerHTML = characterInfo;
+                characterContainer.appendChild(characterDiv);
+            });
         }
 
         // Cargar estadísticas del personaje seleccionado
@@ -384,21 +598,239 @@
             }
         }
 
+        //----FUNCIONES PARA GENERAR RECOMEPNSAS ALEATORIAS-----
+        document.addEventListener('DOMContentLoaded', function () {
+            // Vincular eventos a botones
+            const generateButton = document.getElementById('generateRewardButton');
+            const closeButton = document.querySelector('.close');
+
+            if (generateButton) {
+                generateButton.addEventListener('click', openRewardPopup);
+            } else {
+                console.error("El botón de generar recompensas no se encontró.");
+            }
+
+            if (closeButton) {
+                closeButton.addEventListener('click', closeRewardPopup);
+            } else {
+                console.error("El botón de cerrar no se encontró.");
+            }
+        });
+
+        // Función para abrir la ventana de recompensas
+        function openRewardPopup() {
+            const rewardPopup = document.getElementById('rewardPopup');
+            if (rewardPopup) {
+                rewardPopup.classList.remove('hidden');
+                rewardPopup.style.display = 'block'; // Asegúrate de que el display se cambie a block
+            } else {
+                console.error("No se pudo encontrar el elemento rewardPopup.");
+            }
+        }
+
+        // Función para cerrar la ventana de recompensas
+        function closeRewardPopup() {
+            const rewardPopup = document.getElementById('rewardPopup');
+            if (rewardPopup) {
+                rewardPopup.classList.add('hidden');
+                rewardPopup.style.display = 'none'; // Cambia display a none al cerrar
+            } else {
+                console.error("No se pudo encontrar el elemento rewardPopup.");
+            }
+        }
+
+
+        // Función para generar recompensas aleatorias
+        function generateRewards() {
+            console.log("Función generateRewards llamada");
+
+            const playerLevelInput = document.getElementById('playerLevel');
+            const enemiesDefeatedInput = document.getElementById('enemiesDefeated');
+            const isBossInput = document.getElementById('isBoss');
+
+            if (!playerLevelInput || !enemiesDefeatedInput) {
+                console.error("No se encontraron los elementos de entrada necesarios.");
+                return;
+            }
+
+            const playerLevel = parseInt(playerLevelInput.value);
+            const enemiesDefeated = parseInt(enemiesDefeatedInput.value);
+            const isBoss = isBossInput.checked;
+
+            if (isNaN(playerLevel) || isNaN(enemiesDefeated)) {
+                alert("Por favor, ingrese valores válidos para el nivel del jugador y enemigos derrotados.");
+                return;
+            }
+
+            // Cálculo de experiencia y oro
+            const expPerEnemy = 75;
+            const expBoss = 500;
+            const goldPerEnemy = 25;
+            const goldBoss = 250;
+
+            let totalExp = enemiesDefeated * expPerEnemy;
+            let totalGold = enemiesDefeated * goldPerEnemy;
+            let numItems = Math.min(enemiesDefeated, 4); // Máximo de 4 objetos
+
+            if (isBoss) {
+                totalExp += expBoss;
+                totalGold += goldBoss;
+                numItems += 1; // Añadir un objeto adicional si es jefe
+            }
+
+            // Determinar el rango de nivel de objetos
+            const levelRange = getLevelRange(playerLevel);
+
+            // Obtener los objetos del archivo Excel
+            fetch('items.xlsx')
+                .then(response => response.arrayBuffer())
+                .then(data => {
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const itemsData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    // Filtrar los objetos por nivel
+                    const filteredItems = itemsData.filter(item => item[4] == levelRange);
+                    console.log("Objetos filtrados:", filteredItems);
+
+                    if (filteredItems.length === 0) {
+                        document.getElementById('rewardResults').innerHTML = `<p>No se encontraron objetos para el nivel ${levelRange}.</p>`;
+                        return;
+                    }
+
+                    // Seleccionar objetos aleatorios
+                    const selectedItems = getRandomItems(filteredItems, numItems);
+                    console.log("Objetos seleccionados:", selectedItems);
+
+                    // Mostrar resultados
+                    const resultsContainer = document.getElementById('rewardResults');
+                    resultsContainer.innerHTML = `
+                        <h3>Recompensa:</h3>
+                        <p>${totalGold} de oro.</p>
+                        <p>${totalExp} EXP</p>   
+                        <h3>Objetos:</h3>
+                        <ul>
+                            ${selectedItems.map(item => `<li>${item[0]} - Nivel: ${item[4]}</li>`).join('')}
+                        </ul>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error al cargar el archivo XLS:', error);
+                    document.getElementById('rewardResults').innerHTML = `<p>Error al cargar las recompensas. Verifique el archivo XLSX.</p>`;
+                });
+        }
+
+        // Función para obtener el rango de nivel basado en el nivel del jugador
+        function getLevelRange(playerLevel) {
+            if (playerLevel < 5) {
+                return 1;
+            } else if (playerLevel >= 5 && playerLevel < 10) {
+                return 5;         
+            }else if (playerLevel >= 10 && playerLevel < 15) {
+                return 10;
+            } else if (playerLevel >= 15 && playerLevel < 20) {
+                return 15;
+            } else {
+                return 20;
+            }
+        }
+
+        // Función para seleccionar elementos aleatorios de una lista
+        function getRandomItems(items, count) {
+            const shuffled = items.sort(() => 0.5 - Math.random());
+            return shuffled.slice(0, count);
+        }
+
+
 
         function loadItems() {
-			const url = 'items.xlsx'; // Cambia esto a la ruta de tu archivo
+            const url = 'items.xlsx'; // Cambia esto a la ruta de tu archivo
+
+            fetch(url)
+                .then(response => response.arrayBuffer())
+                .then(data => {
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const items = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    const tableBody = document.querySelector('#itemsTable tbody');
+                    tableBody.innerHTML = ''; // Limpiar contenido existente
+
+                    items.forEach((row, index) => {
+                        if (index === 0) return; // Saltar la fila del encabezado
+
+                        const tr = document.createElement('tr');
+                        row.forEach((cell, cellIndex) => {
+                            const td = document.createElement('td');
+                            td.textContent = cell;
+
+                            // Añadir data-label para diseño responsivo
+                            switch (cellIndex) {
+                                case 0: td.setAttribute('data-label', 'Nombre del objeto'); break;
+                                case 1: td.setAttribute('data-label', 'Descripción'); break;
+                                case 2: td.setAttribute('data-label', 'Tipo de objeto'); break;
+                                case 3: td.setAttribute('data-label', 'Precio (Oro)'); break;
+                                case 4: td.setAttribute('data-label', 'Nivel'); break;
+                                case 5: td.setAttribute('data-label', 'Clase'); break;
+                            }
+
+                            tr.appendChild(td);
+                        });
+
+                        tr.setAttribute('data-type', row[2]); // Asume que la tercera columna es el tipo
+                        tr.setAttribute('data-level', row[4]); // Asume que la quinta columna es el nivel
+                        tr.setAttribute('data-class', row[5]); // Asume que la sexta columna es la clase
+                        tableBody.appendChild(tr);
+                    });
+
+                    itemsLoaded = true; // Marcamos que los objetos ya se han cargado
+                    filterItems(); // Aplicamos el filtro al cargar datos
+                })
+                .catch(error => {
+                    console.error('Error al cargar el archivo XLS:', error);
+                });
+        }
+
+        function resetFilters() {
+            document.getElementById('itemFilter').value = 'all';
+            document.getElementById('levelFilter').value = 'all';
+            document.getElementById('classFilter').value = 'all';
+            filterItems();
+        }
+
+        function filterItems() {
+            const typeFilter = document.getElementById('itemFilter').value;
+            const levelFilter = document.getElementById('levelFilter').value;
+            const classFilter = document.getElementById('classFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#itemsTable tbody tr');
+
+            rows.forEach(row => {
+                const typeMatch = typeFilter === 'all' || row.getAttribute('data-type') === typeFilter;
+                const levelMatch = levelFilter === 'all' || row.getAttribute('data-level') === levelFilter;
+                const classMatch = classFilter === 'all' || row.getAttribute('data-class').toLowerCase().includes(classFilter);
+
+                if (typeMatch && levelMatch && classMatch) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function loadExp() {
+			const url = 'exp.xlsx'; // Cambia esto a la ruta de tu archivo
 
 			fetch(url)
 				.then(response => response.arrayBuffer())
 				.then(data => {
 					const workbook = XLSX.read(data, {type: 'array'});
 					const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-					const items = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+					const exp = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
 
-					const tableBody = document.querySelector('#itemsTable tbody');
+					const tableBody = document.querySelector('#expTable tbody');
 					tableBody.innerHTML = ''; // Clear existing content
 
-					items.forEach((row, index) => {
+					exp.forEach((row, index) => {
 						if (index === 0) return; // Skip header row
 
 						const tr = document.createElement('tr');
@@ -408,52 +840,19 @@
 
 							// Add data-label attribute for responsive design
 							switch (cellIndex) {
-								case 0: td.setAttribute('data-label', 'Nombre del objeto'); break;
-								case 1: td.setAttribute('data-label', 'Descripción'); break;
-								case 2: td.setAttribute('data-label', 'Tipo de objeto'); break;
-								case 3: td.setAttribute('data-label', 'Precio (Oro)'); break;
-								case 4: td.setAttribute('data-label', 'Nivel'); break;
-								case 5: td.setAttribute('data-label', 'Clase'); break;
+								case 0: td.setAttribute('data-label', 'Nivel'); break;
+								case 1: td.setAttribute('data-label', 'Experiencia Total'); break;
+								case 2: td.setAttribute('data-label', 'Incremento de Experiencia'); break;
 							}
 
 							tr.appendChild(td);
 						});
-
-						tr.setAttribute('data-type', row[2]); // Assume third column is the type
-						tr.setAttribute('data-level', row[4]); // Assume fifth column is the level
-						tr.setAttribute('data-class', row[5]); // Assume sixth column is the class
 						tableBody.appendChild(tr);
 					});
 				})
 				.catch(error => {
 					console.error('Error al cargar el archivo XLS:', error);
 				});
-		}
-
-		function resetFilters() {
-			document.getElementById('itemFilter').value = 'all';
-			document.getElementById('levelFilter').value = 'all';
-			document.getElementById('classFilter').value = 'all';
-			filterItems();
-		}
-
-		function filterItems() {
-			const typeFilter = document.getElementById('itemFilter').value;
-			const levelFilter = document.getElementById('levelFilter').value;
-			const classFilter = document.getElementById('classFilter').value.toLowerCase();
-			const rows = document.querySelectorAll('#itemsTable tbody tr');
-			
-			rows.forEach(row => {
-				const typeMatch = typeFilter === 'all' || row.getAttribute('data-type') === typeFilter;
-				const levelMatch = levelFilter === 'all' || row.getAttribute('data-level') === levelFilter;
-				const classMatch = classFilter === 'all' || row.getAttribute('data-class').toLowerCase().includes(classFilter);
-				
-				if (typeMatch && levelMatch && classMatch) {
-					row.style.display = '';
-				} else {
-					row.style.display = 'none';
-				}
-			});
 		}
 
         // SKILLS LOAD AND FILTERS
@@ -464,15 +863,15 @@
             fetch(url)
                 .then(response => response.arrayBuffer())
                 .then(data => {
-                    const workbook = XLSX.read(data, {type: 'array'});
+                    const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const skills = XLSX.utils.sheet_to_json(firstSheet, {header: 1});
+                    const skills = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
                     const tableBody = document.querySelector('#skillsTable tbody');
-                    tableBody.innerHTML = ''; // Clear existing content
+                    tableBody.innerHTML = ''; // Limpiar contenido existente
 
                     skills.forEach((row, index) => {
-                        if (index === 0) return; // Skip header row
+                        if (index === 0) return; // Saltar la fila del encabezado
 
                         const tr = document.createElement('tr');
                         row.forEach((cell, cellIndex) => {
@@ -493,26 +892,22 @@
                         tr.setAttribute('data-class', row[3]); // Assume fourth column is the class
                         tableBody.appendChild(tr);
                     });
+
+                    skillsLoaded = true; // Marcamos que las habilidades ya se han cargado
+                    filterSkills(); // Aplicamos el filtro al cargar datos
                 })
                 .catch(error => {
                     console.error('Error al cargar el archivo XLS:', error);
                 });
         }
 
-        function resetFilters() {
-			document.getElementById('itemFilter').value = 'all';
-			document.getElementById('levelFilter').value = 'all';
-			document.getElementById('classFilter').value = 'all';
-			filterItems();
-		}
-
 		function filterSkills() {
             const skillFilter = document.getElementById('skillFilter').value.toLowerCase();
             const rows = document.querySelectorAll('#skillsTable tbody tr');
-            
+
             rows.forEach(row => {
                 const classMatch = skillFilter === 'all' || row.getAttribute('data-class').toLowerCase().includes(skillFilter);
-                
+
                 if (classMatch) {
                     row.style.display = '';
                 } else {
@@ -522,9 +917,10 @@
         }
 
         function resetFiltersSkills() {
-			document.getElementById('skillFilter').value = 'all';
-			filterSkills();
-		}
+            document.getElementById('skillFilter').value = 'all';
+            filterSkills();
+        }
+
     </script>
 </body>
 </html>

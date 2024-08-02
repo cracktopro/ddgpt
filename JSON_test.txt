@@ -1,0 +1,142 @@
+{
+  "characters": [
+    {
+      "name": "Verithra",
+      "level": 2,
+      "gender": "Femenino",
+      "race": "Elfa Noldor",
+      "class": "Druida",
+      "stats": {
+        "VIT": 15,
+        "FUE": 10,
+        "DES": 16,
+        "INT": 19,
+        "CAR": 12
+      },
+      "inventory": {
+        "gold": 50,
+        "items": [
+          "Amuleto de Protección",
+          "Bastón de la Naturaleza",
+          "Capa de invisibilidad"
+        ]
+      },
+      "xp": 324,
+      "image": "https://i.ibb.co/jHRLF2v/Verithra.webp"
+    },
+    {
+      "name": "Varion",
+      "level": 2,
+      "gender": "Masculino",
+      "race": "Humano",
+      "class": "Pícaro",
+      "stats": {
+        "VIT": 13,
+        "FUE": 10,
+        "DES": 19,
+        "INT": 16,
+        "CAR": 14
+      },
+      "inventory": {
+        "gold": 50,
+        "items": [
+          "Daga de Veneno",
+          "Armadura de cuero reforzada",
+          "Botas de sigilo"
+        ]
+      },
+      "xp": 324,
+      "image": "https://i.ibb.co/vQkB3j4/Varion.webp"
+    },
+    {
+      "name": "Nikaia",
+      "level": 2,
+      "gender": "Femenino",
+      "race": "Dunedain",
+      "class": "Exploradora",
+      "stats": {
+        "VIT": 14,
+        "FUE": 16,
+        "DES": 20,
+        "INT": 10,
+        "CAR": 12
+      },
+      "inventory": {
+        "gold": 50,
+        "items": [
+          "Arco de Elven",
+          "Espada corta mágica",
+          "Anillo de agilidad"
+        ]
+      },
+      "xp": 324,
+      "image": "https://i.ibb.co/xG7cFtK/Nikaia.webp"
+    },
+    {
+      "name": "Samdalf",
+      "level": 2,
+      "gender": "Masculino",
+      "race": "Humano",
+      "class": "Clérigo",
+      "stats": {
+        "VIT": 14,
+        "FUE": 10,
+        "DES": 12,
+        "INT": 18,
+        "CAR": 18
+      },
+      "inventory": {
+        "gold": 50,
+        "items": [
+          "Poción de Curación",
+          "Varita de Luz",
+          "Amuleto de fuerza"
+        ]
+      },
+      "xp": 324,
+      "image": "https://i.ibb.co/h8X0DQB/Samdalf.webp"
+    }
+  ],
+  "enemies": [
+    {
+      "name": "Orco Guerrero",
+      "stats": {
+        "VIT": 20,
+        "FUE": 15,
+        "DES": 12,
+        "INT": 8,
+        "CAR": 6
+      }
+    },
+    {
+      "name": "Orco Arquero",
+      "stats": {
+        "VIT": 18,
+        "FUE": 10,
+        "DES": 14,
+        "INT": 8,
+        "CAR": 7
+      }
+    },
+    {
+      "name": "Orco Chamán",
+      "stats": {
+        "VIT": 22,
+        "FUE": 12,
+        "DES": 10,
+        "INT": 14,
+        "CAR": 9
+      }
+    },
+    {
+      "name": "Orco Capitán",
+      "stats": {
+        "VIT": 25,
+        "FUE": 18,
+        "DES": 15,
+        "INT": 10,
+        "CAR": 8
+      }
+    }
+  ]
+}
