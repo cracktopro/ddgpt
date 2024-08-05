@@ -107,12 +107,6 @@
                             <textarea id="createCharacterItems"></textarea>
                         </div>
 
-                        <h3>Experiencia</h3>
-                        <div class="form-group">
-                            <label for="createCharacterXP">XP:</label>
-                            <input type="number" id="createCharacterXP" min="0" value="0" />
-                        </div>
-
                         <button class="create-button" onclick="createCharacter()">Crear</button> <!-- Botón de Crear -->
                     </div>
                 </div>
@@ -353,6 +347,19 @@
                     <option value="Clérigo">Clérigo</option>
                     <option value="Bardo">Bardo</option>
 				</select>
+                <select id="levelSkillFilter" onchange="filterSkills()">
+                    <option value="all">-Nivel-</option>
+                    <option value="1">Nivel 1</option>
+                    <option value="2">Nivel 2</option>
+                    <option value="3">Nivel 3</option>
+                    <option value="4">Nivel 4</option>
+                    <option value="5">Nivel 5</option>
+                    <option value="6">Nivel 6</option>
+                    <option value="7">Nivel 7</option>
+                    <option value="8">Nivel 8</option>
+                    <option value="9">Nivel 9</option>
+                    <option value="10">Nivel 10</option>
+                </select>
                 <button class="reset-button" onclick="resetFiltersSkills()">Restablecer Filtros</button>
             </div>
 
@@ -743,7 +750,6 @@
 
             // Cerrar la ventana emergente y restablecer el formulario
             closeCreateEnemyPopup();
-            document.getElementById('createEnemyForm').reset();
         }
 
         // Función para cargar los enemigos en el select de eliminación
@@ -926,6 +932,7 @@
             popup.style.display = 'none'; // Cambia display a none al cerrar
         }
 
+        // Función para crear un nuevo personaje
         function createCharacter() {
             const name = document.getElementById('createCharacterName').value.trim();
             const image = document.getElementById('createCharacterImage').value.trim();
@@ -940,10 +947,16 @@
             const car = parseInt(document.getElementById('createCharacterCAR').value);
             const gold = parseInt(document.getElementById('createCharacterGold').value);
             const items = document.getElementById('createCharacterItems').value.split(',').map(item => item.trim());
-            const xp = parseInt(document.getElementById('createCharacterXP').value);
 
             if (!name || !level) {
                 alert('Por favor, complete todos los campos requeridos.');
+                return;
+            }
+
+            // Calcular experiencia según el nivel
+            const xp = getExpForLevel(level);
+            if (xp === null) {
+                alert('Nivel no válido. Por favor, ingresa un nivel válido.');
                 return;
             }
 
@@ -966,7 +979,7 @@
                     gold: gold,
                     items: items
                 },
-                xp: xp
+                xp: xp // Establecer la experiencia calculada
             };
 
             // Agregar el nuevo personaje a la lista de personajes
@@ -979,7 +992,6 @@
 
             // Cerrar la ventana emergente y restablecer el formulario
             closeCreateCharacterPopup();
-            document.getElementById('createCharacterForm').reset();
 
             alert('Personaje creado exitosamente: ' + name);
         }
@@ -1072,23 +1084,68 @@
                 const calculatedLevel = calculateLevel(character.xp);
                 character.level = calculatedLevel; // Asegurarse de que el nivel refleje la experiencia
 
-                // Refrescar la vista de personajes y combate
-                loadCharacterData();
+                // Refrescar la vista de personajes y combate sin cambiar la selección actual
+                updateCharacterDisplay(character);
                 populateCombatSelects();
-                populateEditCharacterSelect(); // Actualizar el select de personajes al cambiar el nombre
-
-                // **Actualizar la vista de combate para reflejar el nivel actualizado**
-                if (charactersData.length > 0) {
-                    loadCharacterStats();
-                }
-
-                // Seleccionar el nuevo nombre en el select de edición
-                document.getElementById('editCharacterSelect').value = newName;
 
                 alert('Cambios guardados exitosamente para el personaje: ' + character.name + ' a nivel ' + character.level);
             } else {
                 console.error('Error al guardar los cambios: personaje no encontrado.');
             }
+        }
+
+        // Función para actualizar la visualización del personaje
+        function updateCharacterDisplay(updatedCharacter) {
+            // Actualizar el personaje específico en la interfaz
+            const characterDivs = document.querySelectorAll('#characterContainer .character');
+            characterDivs.forEach(characterDiv => {
+                const characterName = characterDiv.querySelector('h2').innerText;
+                if (characterName === updatedCharacter.name) {
+                    characterDiv.querySelector('h3').innerText = `Nivel: ${updatedCharacter.level}`;
+                    characterDiv.querySelector('img').src = updatedCharacter.image;
+                    
+                    // Encontrar y actualizar el género
+                    const genderElement = characterDiv.querySelector('p:nth-of-type(1) strong');
+                    if (genderElement) {
+                        genderElement.innerText = updatedCharacter.gender;
+                    }
+
+                    // Encontrar y actualizar la raza
+                    const raceElement = characterDiv.querySelector('p:nth-of-type(2) strong');
+                    if (raceElement) {
+                        raceElement.innerText = updatedCharacter.race;
+                    }
+
+                    // Encontrar y actualizar la clase
+                    const classElement = characterDiv.querySelector('p:nth-of-type(3) strong');
+                    if (classElement) {
+                        classElement.innerText = updatedCharacter.class;
+                    }
+
+                    // Actualizar estadísticas
+                    const statsList = characterDiv.querySelector('.stats');
+                    statsList.children[0].innerText = `VIT: ${updatedCharacter.stats.VIT}`;
+                    statsList.children[1].innerText = `FUE: ${updatedCharacter.stats.FUE}`;
+                    statsList.children[2].innerText = `DES: ${updatedCharacter.stats.DES}`;
+                    statsList.children[3].innerText = `INT: ${updatedCharacter.stats.INT}`;
+                    statsList.children[4].innerText = `CAR: ${updatedCharacter.stats.CAR}`;
+
+                    // Actualizar inventario
+                    const inventoryList = characterDiv.querySelector('.inventory');
+                    inventoryList.children[0].innerText = `Oro: ${updatedCharacter.inventory.gold}`;
+                    inventoryList.children[1].innerHTML = `Objetos:<ul>${updatedCharacter.inventory.items.map(item => `<li>${item}</li>`).join('')}</ul>`;
+
+                    // Actualizar experiencia
+                    const xpElement = characterDiv.querySelector('p:nth-of-type(4)');
+                    if (xpElement) {
+                        xpElement.innerText = updatedCharacter.xp;
+                    }
+                }
+            });
+
+            // Mantener la selección actual en el formulario de edición
+            const editCharacterSelect = document.getElementById('editCharacterSelect');
+            editCharacterSelect.value = updatedCharacter.name;
         }
 
         // Función para obtener la experiencia total requerida para un nivel dado
@@ -1300,14 +1357,25 @@
             }
         }
 
+        function calculateModifier(statValue) {
+            return Math.floor((statValue - 10) / 2);
+        }
+
         // Generar HTML para las estadísticas
         function generateStatsHtml(entity, type) {
-            // Comprobar si 'entity' es un personaje o enemigo y adaptar el HTML
-            const statInputs = Object.keys(entity.stats).map(stat => {
+            // Definir el orden deseado de las estadísticas
+            const statOrder = ['VIT', 'FUE', 'DES', 'INT', 'CAR'];
+
+            // Mapear las estadísticas en el orden especificado
+            const statInputs = statOrder.map(stat => {
+                const statValue = entity.stats[stat];
+                const modifier = calculateModifier(statValue);
+
                 return `
                     <div>
                         <span>${stat}:</span>
-                        <span id="${type}-${stat}-value">${entity.stats[stat]}</span>
+                        <span id="${type}-${stat}-value">${statValue}</span>
+                        <span id="${type}-${stat}-modifier">(${modifier >= 0 ? '+' : ''}${modifier})</span>
                         <input type="number" class="stat-input" id="${type}-${stat}" placeholder="0">
                     </div>
                 `;
@@ -1320,7 +1388,6 @@
             `;
         }
 
-
         // Actualizar estadísticas
         function updateStats(name, type) {
             const entity = (type === 'character') ? charactersData.find(c => c.name === name) : enemiesData.find(e => e.name === name);
@@ -1330,9 +1397,22 @@
                 Object.keys(entity.stats).forEach(stat => {
                     const input = document.getElementById(`${type}-${stat}`);
                     const delta = parseInt(input.value) || 0;
+
+                    // Actualizar la estadística del entity
                     entity.stats[stat] += delta;
-                    document.getElementById(`${type}-${stat}-value`).innerText = entity.stats[stat];
-                    input.value = ''; // Limpiar el campo de texto
+
+                    // Actualizar el valor en el HTML
+                    const statValueElement = document.getElementById(`${type}-${stat}-value`);
+                    const newStatValue = entity.stats[stat];
+                    statValueElement.innerText = newStatValue;
+
+                    // Calcular y actualizar el modificador
+                    const newModifier = calculateModifier(newStatValue);
+                    const modifierElement = document.getElementById(`${type}-${stat}-modifier`);
+                    modifierElement.innerText = `(${newModifier >= 0 ? '+' : ''}${newModifier})`;
+
+                    // Limpiar el campo de texto
+                    input.value = '';
                 });
             } else {
                 alert('Error: entidad no encontrada.');
@@ -1644,12 +1724,17 @@
 
 		function filterSkills() {
             const skillFilter = document.getElementById('skillFilter').value.toLowerCase();
+            const levelSkillFilter = document.getElementById('levelSkillFilter').value;
             const rows = document.querySelectorAll('#skillsTable tbody tr');
 
             rows.forEach(row => {
                 const classMatch = skillFilter === 'all' || row.getAttribute('data-class').toLowerCase().includes(skillFilter);
+                
+                // Obtener el nivel de la habilidad
+                const skillLevel = parseInt(row.cells[2].textContent); // Asume que la tercera columna es el nivel
+                const levelMatch = levelSkillFilter === 'all' || skillLevel <= parseInt(levelSkillFilter);
 
-                if (classMatch) {
+                if (classMatch && levelMatch) {
                     row.style.display = '';
                 } else {
                     row.style.display = 'none';
@@ -1659,8 +1744,10 @@
 
         function resetFiltersSkills() {
             document.getElementById('skillFilter').value = 'all';
+            document.getElementById('levelSkillFilter').value = 'all'; // Restablecer el filtro de nivel
             filterSkills();
         }
+
         // Llamar a la función al cargar la página
         window.onload = function() {
             loadExpData(); // Cargar datos de experiencia
@@ -1669,6 +1756,7 @@
             populateEditCharacterSelect(); // Poblamos el select al iniciar la aplicación
             loadEnemyData(); // Cargamos los datos de enemigos al iniciar la aplicación
         };
+
     </script>
 </body>
 </html>
