@@ -117,8 +117,6 @@
 
         <div id="combat" class="content">
             <h2>Combate</h2>
-            <!-- Botón para abrir la ventana de recompensas -->
-            <button id="generateRewardButton" onclick="openRewardPopup()">Generar Recompensas</button>
 
             <div id="rewardPopup" class="reward-popup hidden">
                 <div class="reward-popup-content">
@@ -146,13 +144,37 @@
 
             <div class="combat-container">
                 <div class="combat-select">
+
                     <label for="characterSelect">Personaje:</label>
                     <select id="characterSelect" onchange="loadCharacterStats()">
                         <!-- Options will be populated dynamically -->
                     </select>
+                    <!-- HTML LANZAR DADO -->
+                    <h3>LANZAR DADO</h3>
+                    <select id="diceSelect">
+                        <option value="4">d4</option>
+                        <option value="6">d6</option>
+                        <option value="8">d8</option>
+                        <option value="10">d10</option>
+                        <option value="12">d12</option>
+                        <option value="20" selected>d20</option>
+                        <option value="100">d100</option>
+                    </select>
+                    <button id="lanzarDado" class="buttonUpdateChar" onclick="lanzarDado()">Lanzar Dado</button>
+
+                    <!-- Ventana Emergente para Mostrar Resultado del Dado -->
+                    <div id="dicePopup" class="dice-popup hidden">
+                        <div class="dice-popup-content">
+                            <span class="close" onclick="closeDicePopup()">&times;</span>
+                            <h2>Resultado del Dado</h2>
+                            <p id="diceResultText">Aquí aparecerá el resultado.</p>
+                        </div>
+                    </div>
                     <!-- Botón para actualizar personajes -->
                     <p>Tras finalizar el combate, genera la recompensa y actualiza tu personaje para guardar su progreso.</p>
-                    <button id="updateCharacterButton" class="buttonUpdateChar" onclick="updateCharacterData()">Actualizar Personaje</button>
+                    <!-- Botón para abrir la ventana de recompensas -->
+                    <button id="generateRewardButton" class="buttonUpdateChar" onclick="openRewardPopup()">Generar Recompensas</button>
+                    <button id="updateCharacterButton" class="buttonUpdateGreen" onclick="updateCharacterData()">Actualizar Personaje</button>
                 </div>
                 <div class="combat-stats" id="characterStats">
                     <!-- Character stats will be displayed here -->
@@ -648,6 +670,37 @@
                 console.error('Error al copiar al portapapeles:', err);
                 alert('Error al copiar al portapapeles');
             });
+        }
+
+        // Función para lanzar el dado
+        function lanzarDado() {
+            // Obtener el valor del dado seleccionado
+            const diceSelect = document.getElementById('diceSelect');
+            const diceSides = parseInt(diceSelect.value);
+
+            // Generar un número aleatorio entre 1 y el número de caras del dado
+            const result = Math.floor(Math.random() * diceSides) + 1;
+
+            // Mostrar el resultado en la ventana emergente
+            showDiceResult(result, diceSides);
+        }
+
+        // Función para mostrar el resultado del dado
+        function showDiceResult(result, diceSides) {
+            const diceResultText = document.getElementById('diceResultText');
+
+            // Formatear el mensaje de resultado
+            diceResultText.innerHTML = `<strong>${result}</strong>`;
+
+            // Mostrar la ventana emergente
+            const dicePopup = document.getElementById('dicePopup');
+            dicePopup.style.display = 'flex';
+        }
+
+        // Función para cerrar la ventana emergente del dado
+        function closeDicePopup() {
+            const dicePopup = document.getElementById('dicePopup');
+            dicePopup.style.display = 'none';
         }
 
         // Función para cargar los datos de savegame.json al cargar la página

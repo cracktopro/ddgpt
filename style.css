@@ -65,6 +65,9 @@ button:hover {
     border-radius: 5px 5px 5px 5px;
     transition: background 0.3s;
 }
+.tab:hover{
+    background: #555;
+}
 
 .tab:not(:last-child) {
     margin-right: 5px;
@@ -72,8 +75,11 @@ button:hover {
 }
 
 .tab.active {
-    background: #358f65;
+    background: #276c54;
     color: #fff;
+}
+.tab.active:hover {
+    background: #358f65;
 }
 
 .content {
@@ -507,6 +513,16 @@ li{
 }
 .buttonUpdateChar{
     width: 350px;
+    transition: background-color 0.3s ease;
+}
+.buttonUpdateGreen{
+    width: 350px;
+    background-color: #276c54;
+    color: #fff;
+    transition: background-color 0.3s ease;
+}
+.buttonUpdateGreen:hover{
+    background-color: #358f65;
 }
 
 /*-----CSS EDITAR PERSONAJES*/
@@ -748,4 +764,65 @@ body::-ms-scrollbar-thumb {
 
 body::-ms-scrollbar-thumb:hover {
     background-color: #4ca576; /* Color del thumb al pasar el ratón en IE y Edge */
+}
+
+/* Estilos para la ventana emergente de lanzamiento de dado */
+.dice-popup {
+    display: none;
+    position: fixed;
+    z-index: 999;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.8); /* Fondo oscuro para el overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dice-popup-content {
+    background-color: #474747;
+    padding: 30px;
+    border: 1px solid #215a4d;
+    width: 90%;
+    max-width: 350px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    position: relative;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.dice-popup-content h2 {
+    color: #fff;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.dice-popup-content p {
+    color: #4cc78e;
+    font-size: 30px;
+    text-align: center;
+    font-family: 'Cinzel', serif;
+}
+
+.dice-popup .close {
+    color: #fff;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.dice-popup .close:hover,
+.dice-popup .close:focus {
+    color: #ff4c4c;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
 }
