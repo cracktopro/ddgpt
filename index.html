@@ -7,7 +7,14 @@
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+
+    <!-- Agregar Firebase a tu proyecto -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
 </head>
+
 <body onload="openTab('load')">
     <div class="container">
 
@@ -25,14 +32,94 @@
             <div class="tab" onclick="openTab('load')">Datos</div>
         </div>
 
-        <!--PESTAÑA DE PERSONAJES-->
+        <!-- PESTAÑA DE PERSONAJES -->
         <div id="characters" class="content active">
-            <div id="characterContainer" class="character-container"></div>
             <div class="character-actions">
+                <button id="createCharacterButton" class="update-button" onclick="openCreateCharacterPopup()">Crear Personaje</button> <!-- Nuevo botón -->
                 <button id="saveGameButton" onclick="saveGame()">Guardar Partida</button>
                 <button id="copyToClipboardButton" onclick="copyToClipboard()">Copiar al Portapapeles</button>
             </div>
+            <div id="characterContainer" class="character-container"></div>
         </div>
+
+        <!-- Ventana Emergente para Crear Personaje -->
+        <div id="createCharacterPopup" class="popup hidden">
+            <div class="popup-content">
+                <span class="close" onclick="closeCreateCharacterPopup()">&times;</span>
+                <h2>Crear Nuevo Personaje</h2>
+                <div class="edit-container">
+                    <div id="createCharacterForm">
+                        <h3>Información del Personaje</h3>
+                        <div class="form-group">
+                            <label for="createCharacterName">Nombre:</label>
+                            <input type="text" id="createCharacterName" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterImage">Imagen (URL):</label>
+                            <input type="text" id="createCharacterImage" placeholder="URL de la imagen" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterLevel">Nivel:</label>
+                            <input type="number" id="createCharacterLevel" min="1" value="1" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterGender">Género:</label>
+                            <input type="text" id="createCharacterGender" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterRace">Raza:</label>
+                            <input type="text" id="createCharacterRace" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterClass">Clase:</label>
+                            <input type="text" id="createCharacterClass" />
+                        </div>
+
+                        <h3>Estadísticas</h3>
+                        <div class="form-group">
+                            <label for="createCharacterVIT">VIT:</label>
+                            <input type="number" id="createCharacterVIT" min="1" value="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterFUE">FUE:</label>
+                            <input type="number" id="createCharacterFUE" min="1" value="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterDES">DES:</label>
+                            <input type="number" id="createCharacterDES" min="1" value="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterINT">INT:</label>
+                            <input type="number" id="createCharacterINT" min="1" value="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterCAR">CAR:</label>
+                            <input type="number" id="createCharacterCAR" min="1" value="10" />
+                        </div>
+
+                        <h3>Inventario</h3>
+                        <div class="form-group">
+                            <label for="createCharacterGold">Oro:</label>
+                            <input type="number" id="createCharacterGold" min="0" value="0" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createCharacterItems">Objetos:</label>
+                            <textarea id="createCharacterItems"></textarea>
+                        </div>
+
+                        <h3>Experiencia</h3>
+                        <div class="form-group">
+                            <label for="createCharacterXP">XP:</label>
+                            <input type="number" id="createCharacterXP" min="0" value="0" />
+                        </div>
+
+                        <button class="create-button" onclick="createCharacter()">Crear</button> <!-- Botón de Crear -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
 
         <div id="combat" class="content">
             <h2>Combate</h2>
@@ -90,9 +177,76 @@
 
         </div>
 
+        <!--ENEMIGOS CRUD-->
+
+        <!-- Pestaña de Enemigos -->
         <div id="enemies" class="content">
+            <h2>Enemigos</h2>
+            <!-- Botón para crear enemigo -->
+            <button id="createEnemyButton" class="update-button" onclick="openCreateEnemyPopup()">Crear Enemigo</button>
             <div id="enemyContainer" class="enemy-container"></div>
+            <!-- Formulario de eliminación de enemigos -->
+            <div class="enemy-actions">
+                <h3>Eliminar Enemigo</h3>
+                <div class="form-group">
+                    <label for="deleteEnemySelect">Seleccionar Enemigo:</label>
+                    <select id="deleteEnemySelect">
+                        <!-- Las opciones se llenarán dinámicamente -->
+                    </select>
+                    <button class="delete-button" onclick="deleteEnemy()">Borrar</button>
+                </div>
+            </div>
         </div>
+
+        <!-- Ventana Emergente para Crear Enemigo -->
+        <div id="createEnemyPopup" class="popup hidden">
+            <div class="popup-content">
+                <span class="close" onclick="closeCreateEnemyPopup()">&times;</span>
+                <h2>Crear Nuevo Enemigo</h2>
+                <div class="edit-container">
+                    <div id="createEnemyForm">
+                        <h3>Información del Enemigo</h3>
+                        <div class="form-group">
+                            <label for="createEnemyName">Nombre:</label>
+                            <input type="text" id="createEnemyName" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="createEnemyLevel">Nivel:</label>
+                            <input type="number" id="createEnemyLevel" min="1" value="1" required />
+                        </div>
+                        <div class="form-group">
+                            <label for="createEnemyClass">Clase:</label>
+                            <input type="text" id="createEnemyClass" />
+                        </div>
+
+                        <h3>Estadísticas</h3>
+                        <div class="form-group">
+                            <label for="createEnemyVIT">VIT:</label>
+                            <input type="number" id="createEnemyVIT" min="1" value="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createEnemyFUE">FUE:</label>
+                            <input type="number" id="createEnemyFUE" min="1" value="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createEnemyDES">DES:</label>
+                            <input type="number" id="createEnemyDES" min="1" value="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createEnemyINT">INT:</label>
+                            <input type="number" id="createEnemyINT" min="1" value="10" />
+                        </div>
+                        <div class="form-group">
+                            <label for="createEnemyCAR">CAR:</label>
+                            <input type="number" id="createEnemyCAR" min="1" value="10" />
+                        </div>
+
+                        <button class="update-button" onclick="createEnemy()">Crear</button> <!-- Botón de Crear Enemigo -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="load" class="content">
             <input type="file" id="fileInput" accept=".json" onchange="loadFile()" />
             <p>Selecciona el fichero JSON o pégalo directamente.</p>
@@ -177,6 +331,7 @@
                     </div>
 
                     <button class="save-button" onclick="saveCharacterChanges()">Guardar Cambios</button>
+                    <button class="delete-button" onclick="deleteCharacter()">Borrar Personaje</button>
                 </div>
             </div>
         </div>
@@ -302,6 +457,31 @@
     </div>
 
     <script>
+        // Configuración de Firebase para tu aplicación web
+        const firebaseConfig = {
+            apiKey: "AIzaSyDEbeTLOwJUoRGbdSSpkPnFmTgBddGzyH8",
+            authDomain: "ddgpt-c99bf.firebaseapp.com",
+            projectId: "ddgpt-c99bf",
+            storageBucket: "ddgpt-c99bf.appspot.com",
+            messagingSenderId: "358764808774",
+            appId: "1:358764808774:web:a2c51689413be5ee519847",
+            measurementId: "G-GFT6CYX217"
+        };
+
+        // Inicializa Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+
+        // Inicializa Firestore
+        const db = firebase.firestore();
+
+        // Función para inicializar la aplicación
+        function initializeApp() {
+            loadExpData(); // Cargar datos de experiencia desde un archivo XLSX
+            loadSavedGame(); // Cargar la partida guardada desde Firestore
+            openTab('characters'); // Abre la pestaña de personajes por defecto
+            populateEditCharacterSelect(); // Poblar el select de personajes al inicio
+            loadEnemyData(); // Cargar datos de enemigos
+        }
 
         let charactersData = [];
         let enemiesData = [];
@@ -372,30 +552,87 @@
             }
         }
         
-        // Función para guardar la partida como un archivo JSON
+        // Función para guardar la partida como un archivo JSON y descargarlo
         function saveGame() {
-            // Convertir los datos de los personajes a JSON
-            const jsonData = JSON.stringify({ characters: charactersData }, null, 2);
+            // Convertir los datos de los personajes y enemigos a JSON
+            const jsonData = JSON.stringify({
+                characters: charactersData,
+                enemies: enemiesData
+            }, null, 2);
 
-            // Crear un blob de tipo JSON
-            const blob = new Blob([jsonData], { type: 'application/json' });
+            // Guardar los datos en Firestore
+            db.collection('games').doc('currentGame').set({
+                characters: charactersData,
+                enemies: enemiesData
+            })
+            .then(() => {
+                console.log('Partida guardada exitosamente en Firebase.');
+                alert('Partida guardada exitosamente en Firebase.');
 
-            // Crear un enlace de descarga
+                // Descargar el archivo JSON
+                const formattedDate = getFormattedDate();
+                downloadJSONFile(jsonData, `savegame_${formattedDate}.json`);
+            })
+            .catch((error) => {
+                console.error('Error al guardar la partida en Firebase:', error);
+                alert('Error al guardar la partida en Firebase.');
+            });
+        }
+
+        // Función para obtener la fecha formateada
+        function getFormattedDate() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0'); // Añadir cero inicial si es necesario
+            const day = String(now.getDate()).padStart(2, '0');        // Añadir cero inicial si es necesario
+            const hours = String(now.getHours()).padStart(2, '0');     // Añadir cero inicial si es necesario
+            const minutes = String(now.getMinutes()).padStart(2, '0'); // Añadir cero inicial si es necesario
+            const seconds = String(now.getSeconds()).padStart(2, '0'); // Añadir cero inicial si es necesario
+            return `${day}-${month}-${year}_${hours}-${minutes}-${seconds}`;
+        }
+
+        // Función para descargar un archivo JSON
+        function downloadJSONFile(data, filename) {
+            const blob = new Blob([data], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'savegame.json';
+            a.download = filename;
             a.click();
-
-            // Liberar el objeto URL
             URL.revokeObjectURL(url);
+        }
 
-            alert('Partida guardada exitosamente como savegame.json');
+
+        function deleteCharacter() {
+            const selectedName = document.getElementById('editCharacterSelect').value;
+            const characterIndex = charactersData.findIndex(c => c.name === selectedName);
+
+            if (characterIndex !== -1) {
+                // Confirmación antes de eliminar
+                const confirmDelete = confirm('¿Estás seguro de que deseas borrar el personaje: ' + selectedName + '?');
+                
+                if (confirmDelete) {
+                    // Eliminar el personaje del array
+                    charactersData.splice(characterIndex, 1);
+
+                    // Actualizar las vistas
+                    loadCharacterData(); // Actualiza la pestaña de Personajes
+                    populateCombatSelects(); // Actualiza la pestaña de Combate
+                    populateEditCharacterSelect(); // Actualiza el select en la pestaña de Editar Personajes
+
+                    alert('Personaje ' + selectedName + ' borrado exitosamente.');
+                }
+            } else {
+                console.error('Error al borrar: personaje no encontrado.');
+            }
         }
 
         // Función para copiar los datos de los personajes al portapapeles
         function copyToClipboard() {
-            const jsonData = JSON.stringify({ characters: charactersData }, null, 2);
+            const jsonData = JSON.stringify({ 
+                characters: charactersData,
+                enemies: enemiesData // Agregar enemigos al JSON
+            }, null, 2);
 
             // Utilizar la API del portapapeles
             navigator.clipboard.writeText(jsonData).then(() => {
@@ -408,32 +645,30 @@
 
         // Función para cargar los datos de savegame.json al cargar la página
         function loadSavedGame() {
-            fetch('savegame.json')
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('No se encontró el archivo savegame.json');
-                    }
-                    return response.json();
-                })
-                .then(data => {
+            db.collection('games').doc('currentGame').get()
+            .then((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
                     if (data.characters) {
                         charactersData = data.characters;
+                        enemiesData = data.enemies || []; // Manejar enemigos si existen
                         loadCharacterData();
-                        alert('Partida cargada exitosamente desde savegame.json');
+                        loadEnemyData();
+                        populateCombatSelects();
+                        populateEditCharacterSelect();
+                        openTab('characters');
                     }
-                })
-                .catch(error => {
-                    console.error('Error al cargar la partida:', error);
-                    // Opcional: Mostrar un mensaje si el archivo no existe
-                    // alert('No se encontró un archivo de partida guardada.');
-                });
+                } else {
+                    console.error('No se encontró ninguna partida guardada en Firebase.');
+                    alert('No se encontró ninguna partida guardada.');
+                }
+            })
+            .catch((error) => {
+                console.error('Error al cargar la partida desde Firebase:', error);
+                alert('Error al cargar la partida desde Firebase.');
+            });
         }
 
-        // Llamar a la función al cargar la página
-        window.onload = function() {
-            loadSavedGame();
-            openTab('load'); // Mantener el comportamiento original de abrir la pestaña de carga
-        };
 
         // Cargar datos del JSON
 
@@ -453,6 +688,130 @@
             }
         }
 
+        //ENEMIGOS CRUD
+
+        // Función para abrir la ventana de creación de enemigos
+        function openCreateEnemyPopup() {
+            const popup = document.getElementById('createEnemyPopup');
+            popup.classList.remove('hidden');
+            popup.style.display = 'flex'; // Mostrar como flex para centrar
+        }
+
+        // Función para cerrar la ventana de creación de enemigos
+        function closeCreateEnemyPopup() {
+            const popup = document.getElementById('createEnemyPopup');
+            popup.classList.add('hidden');
+            popup.style.display = 'none'; // Ocultar ventana emergente
+        }
+
+        // Función para crear un nuevo enemigo
+        function createEnemy() {
+            const name = document.getElementById('createEnemyName').value.trim();
+            const level = parseInt(document.getElementById('createEnemyLevel').value);
+            const classType = document.getElementById('createEnemyClass').value.trim();
+            const vit = parseInt(document.getElementById('createEnemyVIT').value);
+            const fue = parseInt(document.getElementById('createEnemyFUE').value);
+            const des = parseInt(document.getElementById('createEnemyDES').value);
+            const intStat = parseInt(document.getElementById('createEnemyINT').value);
+            const car = parseInt(document.getElementById('createEnemyCAR').value);
+
+            if (!name || isNaN(level)) {
+                alert('Por favor, complete todos los campos requeridos.');
+                return;
+            }
+
+            // Crear un nuevo objeto de enemigo
+            const newEnemy = {
+                name: name,
+                level: level,
+                class: classType,
+                stats: {
+                    VIT: vit,
+                    FUE: fue,
+                    DES: des,
+                    INT: intStat,
+                    CAR: car
+                }
+            };
+
+            // Agregar el nuevo enemigo a la lista de enemigos
+            enemiesData.push(newEnemy);
+
+            // Actualizar las vistas
+            loadEnemyData(); // Actualiza la pestaña de Enemigos
+            populateCombatSelects(); // Actualiza la pestaña de Combate
+
+            // Cerrar la ventana emergente y restablecer el formulario
+            closeCreateEnemyPopup();
+            document.getElementById('createEnemyForm').reset();
+        }
+
+        // Función para cargar los enemigos en el select de eliminación
+        function populateDeleteEnemySelect() {
+            const deleteEnemySelect = document.getElementById('deleteEnemySelect');
+            deleteEnemySelect.innerHTML = enemiesData.map(enemy => `<option value="${enemy.name}">${enemy.name}</option>`).join('');
+
+            // Seleccionar el primer enemigo si existe
+            if (enemiesData.length > 0) {
+                deleteEnemySelect.value = enemiesData[0].name;
+            }
+        }
+
+        // Función para eliminar un enemigo
+        function deleteEnemy() {
+            const selectedName = document.getElementById('deleteEnemySelect').value;
+            const enemyIndex = enemiesData.findIndex(e => e.name === selectedName);
+
+            if (enemyIndex !== -1) {
+                // Confirmación antes de eliminar
+                const confirmDelete = confirm('¿Estás seguro de que deseas borrar el enemigo: ' + selectedName + '?');
+
+                if (confirmDelete) {
+                    // Eliminar el enemigo del array
+                    enemiesData.splice(enemyIndex, 1);
+
+                    // Actualizar las vistas
+                    loadEnemyData(); // Actualiza la pestaña de Enemigos
+                    populateCombatSelects(); // Actualiza la pestaña de Combate
+
+                }
+            } else {
+                console.error('Error al borrar: enemigo no encontrado.');
+            }
+        }
+
+        // Función para cargar los datos de enemigos y actualizar la vista
+        function loadEnemyData() {
+            const enemyContainer = document.getElementById('enemyContainer');
+            enemyContainer.innerHTML = ''; // Limpiar contenido existente
+
+            enemiesData.forEach(enemy => {
+                const enemyDiv = document.createElement('div');
+                enemyDiv.className = 'enemy';
+
+                const enemyInfo = `
+                    <h2>${enemy.name}</h2>
+                    <h3>Nivel: ${enemy.level}</h3>
+                    <p><strong>Clase:</strong> ${enemy.class}</p>
+                    <h3>Estadísticas</h3>
+                    <ul class="stats">
+                        <li><strong>VIT:</strong> ${enemy.stats.VIT}</li>
+                        <li><strong>FUE:</strong> ${enemy.stats.FUE}</li>
+                        <li><strong>DES:</strong> ${enemy.stats.DES}</li>
+                        <li><strong>INT:</strong> ${enemy.stats.INT}</li>
+                        <li><strong>CAR:</strong> ${enemy.stats.CAR}</li>
+                    </ul>
+                `;
+
+                enemyDiv.innerHTML = enemyInfo;
+                enemyContainer.appendChild(enemyDiv);
+            });
+
+            // Llenar el select para eliminar enemigos
+            populateDeleteEnemySelect();
+        }
+
+        // Función para cargar los datos del JSON
         function loadData() {
             const jsonInput = document.getElementById('jsonInput').value;
             const characterContainer = document.getElementById('characterContainer');
@@ -473,7 +832,7 @@
                 console.log("Datos de personajes cargados:", charactersData);
 
                 // Poblar el contenedor de personajes
-                data.characters.forEach(character => {
+                charactersData.forEach(character => {
                     const characterDiv = document.createElement('div');
                     characterDiv.className = 'character';
 
@@ -515,12 +874,14 @@
                     console.log("Datos de enemigos cargados:", enemiesData);
 
                     // Poblar el contenedor de enemigos
-                    data.enemies.forEach(enemy => {
+                    enemiesData.forEach(enemy => {
                         const enemyDiv = document.createElement('div');
                         enemyDiv.className = 'enemy';
 
                         const enemyInfo = `
                             <h2>${enemy.name}</h2>
+                            <h3>Nivel: ${enemy.level}</h3>
+                            <p><strong>Clase:</strong> ${enemy.class}</p>
                             <h3>Estadísticas</h3>
                             <ul class="stats">
                                 <li><strong>VIT:</strong> ${enemy.stats.VIT}</li>
@@ -533,6 +894,7 @@
 
                         enemyDiv.innerHTML = enemyInfo;
                         enemyContainer.appendChild(enemyDiv);
+                        populateDeleteEnemySelect();
                     });
                 } else {
                     console.warn('No se encontraron datos de enemigos o el formato es incorrecto.');
@@ -549,6 +911,79 @@
                 alert('JSON inválido. Por favor, verifica el formato e inténtalo nuevamente.');
             }
         }
+
+        //CREAR PERSONAJES:
+
+        function openCreateCharacterPopup() {
+            const popup = document.getElementById('createCharacterPopup');
+            popup.classList.remove('hidden');
+            popup.style.display = 'block'; // Asegúrate de que el display se cambie a block
+        }
+
+        function closeCreateCharacterPopup() {
+            const popup = document.getElementById('createCharacterPopup');
+            popup.classList.add('hidden');
+            popup.style.display = 'none'; // Cambia display a none al cerrar
+        }
+
+        function createCharacter() {
+            const name = document.getElementById('createCharacterName').value.trim();
+            const image = document.getElementById('createCharacterImage').value.trim();
+            const level = parseInt(document.getElementById('createCharacterLevel').value);
+            const gender = document.getElementById('createCharacterGender').value.trim();
+            const race = document.getElementById('createCharacterRace').value.trim();
+            const classType = document.getElementById('createCharacterClass').value.trim();
+            const vit = parseInt(document.getElementById('createCharacterVIT').value);
+            const fue = parseInt(document.getElementById('createCharacterFUE').value);
+            const des = parseInt(document.getElementById('createCharacterDES').value);
+            const intStat = parseInt(document.getElementById('createCharacterINT').value);
+            const car = parseInt(document.getElementById('createCharacterCAR').value);
+            const gold = parseInt(document.getElementById('createCharacterGold').value);
+            const items = document.getElementById('createCharacterItems').value.split(',').map(item => item.trim());
+            const xp = parseInt(document.getElementById('createCharacterXP').value);
+
+            if (!name || !level) {
+                alert('Por favor, complete todos los campos requeridos.');
+                return;
+            }
+
+            // Crear un nuevo objeto de personaje
+            const newCharacter = {
+                name: name,
+                image: image,
+                level: level,
+                gender: gender,
+                race: race,
+                class: classType,
+                stats: {
+                    VIT: vit,
+                    FUE: fue,
+                    DES: des,
+                    INT: intStat,
+                    CAR: car
+                },
+                inventory: {
+                    gold: gold,
+                    items: items
+                },
+                xp: xp
+            };
+
+            // Agregar el nuevo personaje a la lista de personajes
+            charactersData.push(newCharacter);
+
+            // Actualizar las vistas
+            loadCharacterData(); // Actualiza la pestaña de Personajes
+            populateCombatSelects(); // Actualiza la pestaña de Combate
+            populateEditCharacterSelect(); // Actualiza el select en la pestaña de Editar Personajes
+
+            // Cerrar la ventana emergente y restablecer el formulario
+            closeCreateCharacterPopup();
+            document.getElementById('createCharacterForm').reset();
+
+            alert('Personaje creado exitosamente: ' + name);
+        }
+
 
 
         //EDITAR INFO DE LOS PERSONAJES:
@@ -590,17 +1025,22 @@
             }
         }
 
-        // Función para guardar los cambios realizados en el personaje
         function saveCharacterChanges() {
             const selectedName = document.getElementById('editCharacterSelect').value;
             const character = charactersData.find(c => c.name === selectedName);
 
             if (character) {
+                // Obtener el nivel antes de los cambios
+                const previousLevel = character.level;
+
                 // Actualizar los datos del personaje
                 const newName = document.getElementById('editCharacterName').value;
                 character.name = newName;
                 character.image = document.getElementById('editCharacterImage').value; // Actualizar la URL de la imagen
-                character.level = parseInt(document.getElementById('editCharacterLevel').value);
+
+                // Obtener el nivel introducido manualmente
+                const newLevel = parseInt(document.getElementById('editCharacterLevel').value);
+
                 character.gender = document.getElementById('editCharacterGender').value;
                 character.race = document.getElementById('editCharacterRace').value;
                 character.class = document.getElementById('editCharacterClass').value;
@@ -613,31 +1053,49 @@
 
                 // Actualizar los objetos del inventario y formatearlos como lista
                 character.inventory.items = document.getElementById('editCharacterItems').value.split(',').map(item => item.trim());
-                
-                // Actualizar la experiencia
-                character.xp = parseInt(document.getElementById('editCharacterXP').value);
+
+                // Obtener el nuevo nivel especificado
+                if (newLevel !== previousLevel) {
+                    // Si el nivel ha cambiado manualmente, actualizar la experiencia según la tabla
+                    const expForNewLevel = getExpForLevel(newLevel);
+                    if (expForNewLevel !== null) {
+                        character.xp = expForNewLevel; // Ajustar experiencia al nivel especificado
+                    } else {
+                        alert('Nivel especificado no válido. No hay datos de experiencia para este nivel.');
+                    }
+                } else {
+                    // Si el nivel no ha cambiado manualmente, mantener o recalcular según la XP
+                    character.xp = parseInt(document.getElementById('editCharacterXP').value);
+                }
+
+                // Calcular y actualizar el nuevo nivel basado en la experiencia total
+                const calculatedLevel = calculateLevel(character.xp);
+                character.level = calculatedLevel; // Asegurarse de que el nivel refleje la experiencia
 
                 // Refrescar la vista de personajes y combate
                 loadCharacterData();
                 populateCombatSelects();
                 populateEditCharacterSelect(); // Actualizar el select de personajes al cambiar el nombre
 
+                // **Actualizar la vista de combate para reflejar el nivel actualizado**
+                if (charactersData.length > 0) {
+                    loadCharacterStats();
+                }
+
                 // Seleccionar el nuevo nombre en el select de edición
                 document.getElementById('editCharacterSelect').value = newName;
 
-                alert('Cambios guardados exitosamente para el personaje: ' + character.name);
+                alert('Cambios guardados exitosamente para el personaje: ' + character.name + ' a nivel ' + character.level);
             } else {
                 console.error('Error al guardar los cambios: personaje no encontrado.');
             }
         }
 
-
-        // Llama a esta función después de cargar los datos
-        window.onload = function() {
-            loadSavedGame();
-            openTab('load'); // Mantener el comportamiento original de abrir la pestaña de carga
-            populateEditCharacterSelect(); // Poblamos el select al iniciar la aplicación
-        };
+        // Función para obtener la experiencia total requerida para un nivel dado
+        function getExpForLevel(level) {
+            const levelData = expData.find(data => data.level === level);
+            return levelData ? levelData.totalExp : null; // Devuelve null si el nivel no está definido
+        }
 
 
         // Poblar los selects de personajes y enemigos en la pestaña de combate
@@ -660,6 +1118,36 @@
                 loadEnemyStats();
             }
         }
+
+        //CALCULAR NIVEL EN FUNCIÓN DE LA TABLA EXP.XLSX
+
+        let expData = []; // Array para almacenar los datos de experiencia
+
+        function loadExpData() {
+            const url = 'exp.xlsx'; // Ruta del archivo Excel
+
+            fetch(url)
+                .then(response => response.arrayBuffer())
+                .then(data => {
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const expArray = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+                    console.log('Datos de Excel:', expArray); // Verificar la carga
+
+                    // Convertir a un array de objetos para un acceso fácil
+                    expData = expArray.slice(1).map(row => ({
+                        level: row[0],
+                        totalExp: row[1]
+                    }));
+
+                    console.log('Datos de experiencia cargados:', expData); // Verificar carga en expData
+                })
+                .catch(error => {
+                    console.error('Error al cargar el archivo XLS:', error);
+                });
+        }
+
 
         function updateCharacterData() {
             // Obtener el personaje seleccionado
@@ -698,10 +1186,16 @@
                 goldGain = goldMatch ? parseInt(goldMatch[1], 10) : 0;
             }
 
-            // Actualizar estadísticas del personaje
+            // Actualizar la experiencia del personaje
             character.xp += expGain;
             character.inventory.gold += goldGain;
             character.inventory.items = [...character.inventory.items, ...items];
+
+            // Calcular el nuevo nivel basado en la experiencia total
+            console.log('Datos de experiencia:', expData);
+            const newLevel = calculateLevel(character.xp);
+            character.level = newLevel; // Actualizar el nivel del personaje
+            console.log(`Nivel calculado para ${character.name}:`, newLevel);
 
             // Actualizar otros datos del personaje
             const characterStats = document.getElementById('characterStats');
@@ -713,15 +1207,29 @@
 
             // Refrescar la vista de personajes
             loadCharacterData();
-            populateEditCharacterSelect();
+            populateEditCharacterSelect(); // Asegurarse de actualizar los selectores
+
+            // **Actualizar la vista de combate para reflejar el nivel actualizado**
+            if (charactersData.length > 0) {
+                loadCharacterStats();
+            }
 
             if (rewardResults.innerHTML) {
-                alert(`Personaje ${character.name} actualizado con ${expGain} EXP, ${goldGain} de oro y ${items.length} objetos nuevos.`);
+                alert(`Personaje ${character.name} actualizado a nivel ${newLevel} con ${expGain} EXP, ${goldGain} de oro y ${items.length} objetos nuevos.`);
             } else {
-                alert(`Personaje ${character.name} actualizado. No se generaron recompensas.`);
+                alert(`Personaje ${character.name} actualizado a nivel ${newLevel}. No se generaron recompensas.`);
             }
         }
 
+
+        function calculateLevel(totalExp) {
+            for (let i = expData.length - 1; i >= 0; i--) {
+                if (totalExp >= expData[i].totalExp) {
+                    return expData[i].level;
+                }
+            }
+            return 1; // Nivel mínimo si no cumple con ninguna experiencia
+        }
 
         // Función para refrescar la vista de personajes
         function loadCharacterData() {
@@ -738,7 +1246,7 @@
                 const characterInfo = `
                     <img src="${character.image}" alt="${character.name}">
                     <h2>${character.name}</h2>
-                    <h3>Nivel: ${character.level}</h3>
+                    <h3>Nivel: ${character.level}</h3> <!-- Aquí se muestra el nivel -->
                     <p><strong>Género:</strong> ${character.gender}</p>
                     <p><strong>Raza:</strong> ${character.race}</p>
                     <p><strong>Clase:</strong> ${character.class}</p>
@@ -756,13 +1264,14 @@
                         <li><strong>Objetos:</strong><ul>${itemsList}</ul></li>
                     </ul>
                     <h3>Experiencia</h3>
-                    <p>${character.xp}</p>
+                    <p>${character.xp}</p> <!-- Asegúrate de mostrar la XP -->
                 `;
 
                 characterDiv.innerHTML = characterInfo;
                 characterContainer.appendChild(characterDiv);
             });
         }
+
 
 
         // Cargar estadísticas del personaje seleccionado
@@ -805,11 +1314,12 @@
             }).join('');
 
             return `
-                <h3>${entity.name} - ${entity.class || 'Enemigo'}</h3>
+                <h3>${entity.name} - ${entity.class || 'Enemigo'} - Nivel: ${entity.level}</h3>
                 ${statInputs}
                 <button class="update-button" onclick="updateStats('${entity.name}', '${type}')">Actualizar</button>
             `;
         }
+
 
         // Actualizar estadísticas
         function updateStats(name, type) {
@@ -1151,7 +1661,14 @@
             document.getElementById('skillFilter').value = 'all';
             filterSkills();
         }
-
+        // Llamar a la función al cargar la página
+        window.onload = function() {
+            loadExpData(); // Cargar datos de experiencia
+            loadSavedGame();
+            openTab('load'); // Mantener el comportamiento original de abrir la pestaña de carga
+            populateEditCharacterSelect(); // Poblamos el select al iniciar la aplicación
+            loadEnemyData(); // Cargamos los datos de enemigos al iniciar la aplicación
+        };
     </script>
 </body>
 </html>
