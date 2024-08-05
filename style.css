@@ -638,7 +638,7 @@ ul.inventory ul li {
     border-radius: 10px;
     width: 90%;
     max-width: 600px; /* Ancho máximo de la ventana */
-    max-height: 100vh; /* Altura máxima de la ventana: 100% de la altura de la ventana de visualización */
+    max-height: 90vh; /* Altura máxima de la ventana: 100% de la altura de la ventana de visualización */
     overflow-y: auto; /* Permitir desplazamiento vertical */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Sombra para dar profundidad */
     position: relative;
